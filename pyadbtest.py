@@ -17,4 +17,4 @@ class PyAdb(object):
 
 
     def adb_list_devices(self):
-        
+
