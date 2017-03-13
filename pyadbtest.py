@@ -115,9 +115,17 @@ class PyAdb(object):
         self.logger.info("Devices Output: \n %s" % str(list_devices_output.stdout))
         #self.logger.info("Devices Error Output (if any): \n %s" % str(list_devices_output.stderr))
 
+    def adb_get_packages_installed(self):
+        cmd = [self.adb_executable_loc, '-e', 'shell', 'pm', 'list', 'packages', '-f']
+        all_packages_output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+        self.logger.info("Devices Output: \n %s" % str(all_packages_output.stdout))
+
+        # TODO: Parse output to return a list of some sort
+
 adb_proc = PyAdb()
 adb_proc.adb_start()
 adb_proc.adb_list_devices()
+adb_proc.adb_get_packages_installed()
 
 
 
