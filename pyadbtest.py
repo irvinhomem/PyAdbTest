@@ -22,6 +22,7 @@ class PyAdb(object):
 
         self.android_sdk_path = ''
         self.adb_executable_loc = self.find_adb_location()
+        # self.android_sdk_path set in function above
 
         if self.adb_executable_loc == '':
             self.logger.info("ADB not found!")
@@ -123,15 +124,31 @@ class PyAdb(object):
         # Parse output to return a list of some sort.
         # If stripped-line contains starts with the word "package:", extract items as a List of Dictionaries
         line_list = str(all_packages_output.stdout).split("\n")
-        packages_list_plus_extras = []
-        for line in line_list:
-            packages_list_plus_extras = [].append(line)
+        packages_list = []
 
-        self.logger.debug("List number: %s" % str(len(packages_list_plus_extras)))
-        if len(packages_list_plus_extras) > 2:
-            self.logger.debug("Line #1: %s" % str(packages_list_plus_extras[0]))
-            self.logger.debug("Line #2: %s" % str(packages_list_plus_extras[1]))
-            self.logger.debug("Line #3: %s" % str(packages_list_plus_extras[2]))
+        for line in line_list:
+            if line.strip().startswith('package:'):
+                package_info = dict()
+                package_info['path'] =line.lstrip('package:').split("=")[0]
+                package_info['pkg_name'] = line.lstrip('package:').split("=")[1]
+                packages_list.append(package_info)
+
+        self.logger.debug("List number: %s" % str(len(packages_list)))
+        if len(packages_list) > 2:
+            self.logger.debug("Line #1: Path: %s" % str(packages_list[0]['path']))
+            self.logger.debug("Line #1: Name: %s" % str(packages_list[0]['pkg_name']))
+            self.logger.debug("Line #2: Path: %s" % str(packages_list[1]['path']))
+            self.logger.debug("Line #2: Name: %s" % str(packages_list[1]['pkg_name']))
+            self.logger.debug("Line #3: Path: %s" % str(packages_list[2]['path']))
+            self.logger.debug("Line #3: Name: %s" % str(packages_list[2]['pkg_name']))
+
+        return packages_list
+
+    def adb_list_running_apps:
+
+    def adb_get_main_activity:
+
+    def parse_manifest_xml:
 
 adb_proc = PyAdb()
 adb_proc.adb_start()
