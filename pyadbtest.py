@@ -120,7 +120,18 @@ class PyAdb(object):
         all_packages_output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
         self.logger.info("Devices Output: \n %s" % str(all_packages_output.stdout))
 
-        # TODO: Parse output to return a list of some sort
+        # Parse output to return a list of some sort.
+        # If stripped-line contains starts with the word "package:", extract items as a List of Dictionaries
+        line_list = str(all_packages_output.stdout).split("\n")
+        packages_list_plus_extras = []
+        for line in line_list:
+            packages_list_plus_extras = [].append(line)
+
+        self.logger.debug("List number: %s" % str(len(packages_list_plus_extras)))
+        if len(packages_list_plus_extras) > 2:
+            self.logger.debug("Line #1: %s" % str(packages_list_plus_extras[0]))
+            self.logger.debug("Line #2: %s" % str(packages_list_plus_extras[1]))
+            self.logger.debug("Line #3: %s" % str(packages_list_plus_extras[2]))
 
 adb_proc = PyAdb()
 adb_proc.adb_start()
