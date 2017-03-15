@@ -23,6 +23,7 @@ class PyAdb(object):
         self.android_sdk_path = ''
         self.adb_executable_loc = self.find_adb_location()
         # self.android_sdk_path set in function above
+        self.aapt_loc = self.set_aapt_loc()
 
         if self.adb_executable_loc == '':
             self.logger.info("ADB not found!")
@@ -144,11 +145,35 @@ class PyAdb(object):
 
         return packages_list
 
-    def adb_list_running_apps:
+    def adb_list_running_apps(self):
+        return
 
-    def adb_get_main_activity:
+    def adb_get_main_activity(self):
+        return
 
-    def parse_manifest_xml:
+    def set_aapt_loc(self):
+        build_tools_path = os.path.join(self.android_sdk_path, 'build-tools')
+        dirs = [dir for dir in os.walk(build_tools_path)]
+        largest = ''
+        if len(dirs) > 0:
+            self.logger.debug("Dir #1: %s" % str(dirs[0]))
+            for items in dirs[0]:
+                #if largest == '':
+                #    largest = sub_dirs[1]
+                if sub_dirs[1] > largest:
+                    largest = sub_dirs[1]
+
+        self.logger.debug("Largest Number/Alphabetically Dir: %s" % str(largest))
+
+
+        #self.aapt_loc = os.path.join(self.android_sdk_path, 'build-tools')
+
+    def get_immediate_subdirectories(a_dir):
+        return [name for name in os.listdir(a_dir)
+                if os.path.isdir(os.path.join(a_dir, name))]
+
+    def parse_manifest_xml(self):
+        return
 
 adb_proc = PyAdb()
 adb_proc.adb_start()
