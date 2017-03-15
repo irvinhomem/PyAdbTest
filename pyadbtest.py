@@ -197,9 +197,39 @@ class PyAdb(object):
 
         self.logger.debug("APK Manifest A-XML: \n %s" % str(apk_xml_output.stdout))
 
+        # Parse A-XML output
+        lines_list = str(apk_xml_output.stdout).split("\n")
+        self.logger.debug("A-XML # Lines: %s" % str(len(lines_list)))
+
+        elements = []
+        for line in lines_list:
+            # Count number of spaces prefixing each line
+            spacenum = len(line) - len(line.lstrip('\n'))
+            element_item = dict()
+            curr_parent =  None
+            if line.lstrip().startswith("E:"):
+                element_item['leadspace'] = spacenum
+                element_item['type'] = line.lstrip().split(' ')[0]
+                if curr_parent == None:
+                    element_item['curr_parent'] = element_item
+                else:
+                    element_item['curr_parent'] =curr_parent
+
+                elements.append(element_item)
+                #for idx, single_element in enumerate(elements):
+                if (element_item['leadspace'] - elements[()]['leadspace'] == 2):
+                    if line.lstrip().startswith("E:"):
+                        element_item['attribute'] = (line.lstrip().split('=')[0], line.lstrip().split('=')[0])
+                    elif line.lstrip().startswith("A:"):
+                        element_item['child_element'] = line.lstrip().split(' ')[0]
+
+        self.logger.debug("Element Count: %i" % len(elements))
+
+
         return
 
     def parse_manifest_using_ClassyShark(self):
+        # www.classyshark.com
         return
 
 adb_proc = PyAdb()
@@ -207,7 +237,8 @@ adb_proc.adb_start()
 adb_proc.adb_list_devices()
 adb_proc.adb_get_packages_installed()
 
-adb_proc.aapt_get_activity_list('app-debug.apk')
+#adb_proc.aapt_get_activity_list('app-debug.apk')
+adb_proc.aapt_get_activity_list('eu.chainfire.supersu_2.79-279_minAPI7(nodpi)_apkmirror.com.apk')
 
 
 
