@@ -6,6 +6,7 @@ import os
 import platform
 import getpass
 import ctypes
+import json
 #from com.android.monkeyrunner import MonkeyRunner, MonkeyDevice
 
 
@@ -20,6 +21,10 @@ class PyAdb(object):
         self.logger.setLevel(logging.DEBUG)
         # self.logger.setLevel(logging.WARNING)
 
+        config_file_path = os.path.join('config', 'APK_PATH.txt')
+        #config_file_path = os.path.join('config/APK_PATH.txt')
+
+        self.apk_files_path = self.read_config_file(config_file_path)
         self.android_sdk_path = ''
         self.adb_executable_loc = self.find_adb_location()
         # self.android_sdk_path set in function above
@@ -29,6 +34,13 @@ class PyAdb(object):
             self.logger.info("ADB not found!")
             exit()
 
+    def read_config_file(self, configPath):
+        self.logger.debug("Config Path: %s" % str(configPath))
+        with open(configPath) as data_file:
+            data = json.load(data_file)
+            self.logger.debug("APK Config Path: %s" % str(data['config']['apk_path']))
+
+        return str(data['config']['apk_path'])
 
     def find_adb_location(self):
         # Check OS
@@ -148,37 +160,54 @@ class PyAdb(object):
     def adb_list_running_apps(self):
         return
 
-    def adb_get_main_activity(self):
+    def aapt_get_activity_list(self, apk_file_name):
+        activity_listing = self.parse_manifest_xml(os.path.join(self.apk_files_path, apk_file_name))
+        return
+
+    def aapt_get_main_activity(self):
         return
 
     def set_aapt_loc(self):
         build_tools_path = os.path.join(self.android_sdk_path, 'build-tools')
-        dirs = [dir for dir in os.walk(build_tools_path)]
-        largest = ''
-        if len(dirs) > 0:
-            self.logger.debug("Dir #1: %s" % str(dirs[0]))
-            for items in dirs[0]:
-                #if largest == '':
-                #    largest = sub_dirs[1]
-                if sub_dirs[1] > largest:
-                    largest = sub_dirs[1]
+        self.logger.debug("Build Tools Path: %s" % str(build_tools_path))
+        sub_dirs = self.get_immediate_subdirectories(build_tools_path)
 
-        self.logger.debug("Largest Number/Alphabetically Dir: %s" % str(largest))
+        sorted_list = sorted(sub_dirs)
+        self.logger.debug("Largest Number/Alphabetically Dir: %s" % str(sorted_list[len(sorted_list)-1]))
+        largest = sorted_list[len(sorted_list)-1]
 
+        aapt_loc =''
+        if platform.system() == "Windows":
+            aapt_loc = os.path.join(self.android_sdk_path, 'build-tools', largest, 'aapt.exe')
+        else:
+            aapt_loc = os.path.join(self.android_sdk_path, 'build-tools', largest, 'aapt')
 
-        #self.aapt_loc = os.path.join(self.android_sdk_path, 'build-tools')
+        self.logger.debug("AAPT Location set to: %s" % str(aapt_loc))
 
-    def get_immediate_subdirectories(a_dir):
+        return aapt_loc
+
+    def get_immediate_subdirectories(self, a_dir):
         return [name for name in os.listdir(a_dir)
                 if os.path.isdir(os.path.join(a_dir, name))]
 
-    def parse_manifest_xml(self):
+    def parse_manifest_xml(self, apk_file_path):
+        cmd = [self.aapt_loc, 'dump', 'xmltree', apk_file_path, 'AndroidManifest.xml']
+        apk_xml_output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                             universal_newlines=True, shell=True)
+
+        self.logger.debug("APK Manifest A-XML: \n %s" % str(apk_xml_output.stdout))
+
+        return
+
+    def parse_manifest_using_ClassyShark(self):
         return
 
 adb_proc = PyAdb()
 adb_proc.adb_start()
 adb_proc.adb_list_devices()
 adb_proc.adb_get_packages_installed()
+
+adb_proc.aapt_get_activity_list('app-debug.apk')
 
 
 
