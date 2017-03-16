@@ -216,14 +216,17 @@ class PyAdb(object):
                 self.logger.debug("Got FIRST item: %s" % str(AXML_Item['name']))
             elif AXML_Item['type'] in ('E:', 'A:') :
                 self.logger.debug("Got item: %s : Type: %s" % (str(AXML_Item['name']), str(AXML_Item['type'])))
-                self.logger.debug("Current Item Lead Space: [%s] :: Last PARENT Lead space: [%s]" % (str(AXML_Item['leadspace']), str(last_parent_element['leadspace'])))
-                if AXML_Item['type'] == 'E:' and (AXML_Item['leadspace'] > last_parent_element['leadspace']):
-                    #if AXML_Item['type'] == 'E':
-                    #if last_parent_element['type'] in ('E:', 'N:'):
-                    last_parent_element['child_items'].append(AXML_Item)
-                    self.logger.debug("APPENDED: [%s] to PARENT [%s]" % (AXML_Item['name'], last_parent_element['name']))
-                    # Change focus of last_parent to the current element in case it has children following
-                    last_parent_element = AXML_Item
+                self.logger.debug("Current Item Lead Space: [%s] :: Last PARENT (%s) Lead space: [%s]" %
+                                  (str(AXML_Item['leadspace']), str(last_parent_element['name']), str(last_parent_element['leadspace'])))
+                #if AXML_Item['type'] == 'E:' and (AXML_Item['leadspace'] > last_parent_element['leadspace']):
+                if (AXML_Item['leadspace'] > last_parent_element['leadspace']):
+                    #if AXML_Item['type'] in ('E:', 'N:'):
+                    if last_parent_element['type'] in ('E:', 'N:'):
+                        last_parent_element['child_items'].append(AXML_Item)
+                        self.logger.debug("APPENDED: CHILD [%s] to PARENT [%s]" % (AXML_Item['name'], last_parent_element['name']))
+                        # Change focus of last_parent to the current element in case it has children following
+                        last_parent_element = AXML_Item
+                    elif AXML_Item['type'] == 'A:':
                 elif AXML_Item['leadspace'] == last_parent_element['leadspace']:
                     AXML_elements.append(AXML_Item)
 
