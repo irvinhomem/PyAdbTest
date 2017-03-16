@@ -207,15 +207,24 @@ class PyAdb(object):
         prev_lead_space_idx = 0
         for idx, line in enumerate(lines_list):
             # Count number of spaces prefixing each line
-            spacenum = len(line) - len(line.lstrip('\n'))
+            spacenum = len(line) - len(line.lstrip(' '))
+            self.logger.debug('Current Line LEADSPACE: %s' % str(spacenum))
             AXML_Item = self.determine_AXML_Item_type(line, spacenum)
-            self.logger.debug("AXML ITEM TYPE: %s" % str(AXML_Item['type']))
+            #self.logger.debug("AXML ITEM TYPE: %s" % str(AXML_Item['type']))
             if AXML_Item['type'] == 'N:':
                 last_parent_element = AXML_Item
+                self.logger.debug("Got FIRST item: %s" % str(AXML_Item['name']))
             elif AXML_Item['type'] in ('E:', 'A:') :
-                if AXML_Item['leadspace'] > last_parent_element['leadspace']:
+                self.logger.debug("Got item: %s : Type: %s" % (str(AXML_Item['name']), str(AXML_Item['type'])))
+                self.logger.debug("Current Item Lead Space: [%s] :: Last PARENT Lead space: [%s]" % (str(AXML_Item['leadspace']), str(last_parent_element['leadspace'])))
+                if AXML_Item['type'] == 'E:' and (AXML_Item['leadspace'] > last_parent_element['leadspace']):
+                    #if AXML_Item['type'] == 'E':
+                    #if last_parent_element['type'] in ('E:', 'N:'):
                     last_parent_element['child_items'].append(AXML_Item)
-                else:
+                    self.logger.debug("APPENDED: [%s] to PARENT [%s]" % (AXML_Item['name'], last_parent_element['name']))
+                    # Change focus of last_parent to the current element in case it has children following
+                    last_parent_element = AXML_Item
+                elif AXML_Item['leadspace'] == last_parent_element['leadspace']:
                     AXML_elements.append(AXML_Item)
 
                 # if AXML_Item['leadspace'] > prev_lead_space:
@@ -252,24 +261,25 @@ class PyAdb(object):
 
         return
 
-    def determine_AXML_Item_type(self, line, spacenum):
+    def determine_AXML_Item_type(self, line, lead_space_num):
         AXML_item = dict()
         if line.lstrip().startswith("E:"):
             AXML_item['type'] = 'E:'
-            AXML_item['leadspace'] = spacenum
+            AXML_item['leadspace'] = lead_space_num
             AXML_item['name'] = line.lstrip().split(' ')[1]
             AXML_item['AXML_line_num'] = line.lstrip().split('(')[1]
             AXML_item['child_items'] = []
         elif line.lstrip().startswith("A:"):
             AXML_item['type'] = 'A:'
-            AXML_item['leadspace'] = spacenum
-            AXML_item['attr_name'] = line.lstrip().split('=')[0]
+            AXML_item['leadspace'] = lead_space_num
+            AXML_item['name'] = line.lstrip().split('=')[0]
             AXML_item['attr_value'] = line.lstrip().split('=')[1]
         elif line.lstrip().startswith("N:"):
             AXML_item['type'] = 'N:'
-            AXML_item['leadspace'] = spacenum
-            AXML_item['schema_name'] = line.lstrip().split('=')[0]
+            AXML_item['leadspace'] = lead_space_num
+            AXML_item['name'] = line.lstrip().split('=')[0]
             AXML_item['schema_url'] = line.lstrip().split('=')[1]
+            AXML_item['child_items'] = []
         else:
             AXML_item['type'] = 'Unknown'
         return AXML_item
