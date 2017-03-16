@@ -201,37 +201,78 @@ class PyAdb(object):
         lines_list = str(apk_xml_output.stdout).split("\n")
         self.logger.debug("A-XML # Lines: %s" % str(len(lines_list)))
 
-        elements = []
+        AXML_elements = []
+        last_parent_element = None
         prev_lead_space = 0
         prev_lead_space_idx = 0
         for idx, line in enumerate(lines_list):
-            element_item = dict()
             # Count number of spaces prefixing each line
             spacenum = len(line) - len(line.lstrip('\n'))
-            if spacenum > prev_lead_space:
-                # Child "element" or "attribute"
+            AXML_Item = self.determine_AXML_Item_type(line, spacenum)
+            self.logger.debug("AXML ITEM TYPE: %s" % str(AXML_Item['type']))
+            if AXML_Item['type'] == 'N:':
+                last_parent_element = AXML_Item
+            elif AXML_Item['type'] in ('E:', 'A:') :
+                if AXML_Item['leadspace'] > last_parent_element['leadspace']:
+                    last_parent_element['child_items'].append(AXML_Item)
+                else:
+                    AXML_elements.append(AXML_Item)
 
-                curr_parent =  None
-                if line.lstrip().startswith("E:"):
-                    element_item['leadspace'] = spacenum
-                    element_item['type'] = line.lstrip().split(' ')[0]
-                    if curr_parent == None:
-                        element_item['curr_parent'] = element_item
-                    else:
-                        element_item['curr_parent'] = curr_parent
+                # if AXML_Item['leadspace'] > prev_lead_space:
+                #     # Child "element" or "attribute"
+                #     if len(AXML_elements) == 0:
+                #         AXML_elements.append(AXML_Item)
+                #         prev_lead_space = AXML_Item['leadspace']
+                #         #prev_lead_space_idx =
+                #     elif len(AXML_elements) > 0:
+                #     AXML_elements.insert()
+                # else:
 
-                    elements.append(element_item)
-                    #for idx, single_element in enumerate(elements):
-                    if (element_item['leadspace'] - elements[()]['leadspace'] == 2):
-                        if line.lstrip().startswith("E:"):
-                            element_item['attribute'] = (line.lstrip().split('=')[0], line.lstrip().split('=')[0])
-                        elif line.lstrip().startswith("A:"):
-                            element_item['child_element'] = line.lstrip().split(' ')[0]
+                #AXML_elements.append(AXML_Item)
 
-        self.logger.debug("Element Count: %i" % len(elements))
+                # curr_parent =  None
+                # if line.lstrip().startswith("E:"):
+                #     element_item['leadspace'] = spacenum
+                #     element_item['type'] = line.lstrip().split(' ')[0]
+                #     if curr_parent == None:
+                #         element_item['curr_parent'] = element_item
+                #     else:
+                #         element_item['curr_parent'] = curr_parent
+                #
+                #     elements.append(element_item)
+                #     #for idx, single_element in enumerate(elements):
+                #     if (element_item['leadspace'] - elements[()]['leadspace'] == 2):
+                #         if line.lstrip().startswith("E:"):
+                #             element_item['attribute'] = (line.lstrip().split('=')[0], line.lstrip().split('=')[0])
+                #         elif line.lstrip().startswith("A:"):
+                #             element_item['child_element'] = line.lstrip().split(' ')[0]
+
+        self.logger.debug("Element Count: %i" % len(AXML_elements))
 
 
         return
+
+    def determine_AXML_Item_type(self, line, spacenum):
+        AXML_item = dict()
+        if line.lstrip().startswith("E:"):
+            AXML_item['type'] = 'E:'
+            AXML_item['leadspace'] = spacenum
+            AXML_item['name'] = line.lstrip().split(' ')[1]
+            AXML_item['AXML_line_num'] = line.lstrip().split('(')[1]
+            AXML_item['child_items'] = []
+        elif line.lstrip().startswith("A:"):
+            AXML_item['type'] = 'A:'
+            AXML_item['leadspace'] = spacenum
+            AXML_item['attr_name'] = line.lstrip().split('=')[0]
+            AXML_item['attr_value'] = line.lstrip().split('=')[1]
+        elif line.lstrip().startswith("N:"):
+            AXML_item['type'] = 'N:'
+            AXML_item['leadspace'] = spacenum
+            AXML_item['schema_name'] = line.lstrip().split('=')[0]
+            AXML_item['schema_url'] = line.lstrip().split('=')[1]
+        else:
+            AXML_item['type'] = 'Unknown'
+        return AXML_item
 
     def parse_manifest_using_ClassyShark(self):
         # www.classyshark.com
