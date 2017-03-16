@@ -202,26 +202,31 @@ class PyAdb(object):
         self.logger.debug("A-XML # Lines: %s" % str(len(lines_list)))
 
         elements = []
-        for line in lines_list:
+        prev_lead_space = 0
+        prev_lead_space_idx = 0
+        for idx, line in enumerate(lines_list):
+            element_item = dict()
             # Count number of spaces prefixing each line
             spacenum = len(line) - len(line.lstrip('\n'))
-            element_item = dict()
-            curr_parent =  None
-            if line.lstrip().startswith("E:"):
-                element_item['leadspace'] = spacenum
-                element_item['type'] = line.lstrip().split(' ')[0]
-                if curr_parent == None:
-                    element_item['curr_parent'] = element_item
-                else:
-                    element_item['curr_parent'] =curr_parent
+            if spacenum > prev_lead_space:
+                # Child "element" or "attribute"
 
-                elements.append(element_item)
-                #for idx, single_element in enumerate(elements):
-                if (element_item['leadspace'] - elements[()]['leadspace'] == 2):
-                    if line.lstrip().startswith("E:"):
-                        element_item['attribute'] = (line.lstrip().split('=')[0], line.lstrip().split('=')[0])
-                    elif line.lstrip().startswith("A:"):
-                        element_item['child_element'] = line.lstrip().split(' ')[0]
+                curr_parent =  None
+                if line.lstrip().startswith("E:"):
+                    element_item['leadspace'] = spacenum
+                    element_item['type'] = line.lstrip().split(' ')[0]
+                    if curr_parent == None:
+                        element_item['curr_parent'] = element_item
+                    else:
+                        element_item['curr_parent'] = curr_parent
+
+                    elements.append(element_item)
+                    #for idx, single_element in enumerate(elements):
+                    if (element_item['leadspace'] - elements[()]['leadspace'] == 2):
+                        if line.lstrip().startswith("E:"):
+                            element_item['attribute'] = (line.lstrip().split('=')[0], line.lstrip().split('=')[0])
+                        elif line.lstrip().startswith("A:"):
+                            element_item['child_element'] = line.lstrip().split(' ')[0]
 
         self.logger.debug("Element Count: %i" % len(elements))
 
