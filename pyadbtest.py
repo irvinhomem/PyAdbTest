@@ -204,13 +204,27 @@ class PyAdb(object):
         self.logger.debug(buff)
         self.logger.debug('==================================')
 
+        #namespaces = {'owl': 'http://www.w3.org/2002/07/owl#'}
+        namespaces = {'android': 'http://schemas.android.com/apk/res/android'}
+
         xml_doc = ET.fromstring(ap.getBuff())
-        self.logger.debug("XML Root Tag: %s" % xml_doc.tag)
+        self.logger.debug("XML ROOT Tag: %s" % xml_doc.tag)
         self.logger.debug('Number of child elements: %i' % len(list(xml_doc)))
+        self.logger.debug('Android APK main Package: %s' % xml_doc.get('package'))
+        self.logger.debug('Version code: %s' % xml_doc.get('{http://schemas.android.com/apk/res/android}versionCode'))
+        #self.logger.debug('XML NAMESPACE: %s' % xml_doc.get('xmlns:android'))
+
 
         for child in xml_doc:
             self.logger.debug('Child: [%s] \n Attribute: [%s]' % (str(child.tag), str(child.attrib)))
         #buff.getElementsByTagName
+
+
+        self.logger.debug('*****************')
+        self.logger.debug("This doesn't work")
+        for activity in xml_doc.findall('application/activity', namespaces):
+            activity_name = activity.get('name')
+            self.logger.debug("APP ACTIVITY Name: %s" % activity_name)
 
         self.logger.debug('*****************')
         for activity in xml_doc.findall('application/activity'):
