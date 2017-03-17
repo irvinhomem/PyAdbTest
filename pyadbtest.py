@@ -7,6 +7,12 @@ import platform
 import getpass
 import ctypes
 import json
+import axmlparserpy.axmlprinter as axmlprinter
+#import axmlparserpy.apk as apk
+import xml.dom.minidom as minidom
+from xml.etree import ElementTree as ET
+
+#import axmlparserpy.bytecode
 #from com.android.monkeyrunner import MonkeyRunner, MonkeyDevice
 
 
@@ -190,6 +196,41 @@ class PyAdb(object):
         return [name for name in os.listdir(a_dir)
                 if os.path.isdir(os.path.join(a_dir, name))]
 
+    def use_AXML_Printer(self, apk_name):
+        manifest_path = os.path.join(self.apk_files_path, apk_name, 'AndroidManifest.xml')
+        ap = axmlprinter.AXMLPrinter(open(manifest_path,'rb').read())
+        buff = minidom.parseString(ap.getBuff()).toxml()
+        self.logger.debug('==================================')
+        self.logger.debug(buff)
+        self.logger.debug('==================================')
+
+        xml_doc = ET.fromstring(ap.getBuff())
+        self.logger.debug("XML Root Tag: %s" % xml_doc.tag)
+        self.logger.debug('Number of child elements: %i' % len(list(xml_doc)))
+
+        for child in xml_doc:
+            self.logger.debug('Child: [%s] \n Attribute: [%s]' % (str(child.tag), str(child.attrib)))
+        #buff.getElementsByTagName
+
+        self.logger.debug('*****************')
+        for activity in xml_doc.findall('application/activity'):
+            activity_name = activity.get('{http://schemas.android.com/apk/res/android}name')
+            self.logger.debug("APP ACTIVITY Name: %s" % activity_name)
+
+        self.logger.debug('*****************')
+
+        for activity in xml_doc.findall('.//activity'):
+            activity_name = activity.get('{http://schemas.android.com/apk/res/android}name')
+            self.logger.debug("With xPath ACTIVITY Name: %s" % activity_name)
+
+        self.logger.debug('*****************')
+
+        for activity in xml_doc.findall('uses-permission'):
+            activity_name = activity.get('{http://schemas.android.com/apk/res/android}name')
+            self.logger.debug("PERMISSIONS Name: %s" % activity_name)
+
+        self.logger.debug('*****************')
+
     def parse_manifest_xml(self, apk_file_path):
         cmd = [self.aapt_loc, 'dump', 'xmltree', apk_file_path, 'AndroidManifest.xml']
         apk_xml_output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -226,9 +267,12 @@ class PyAdb(object):
                         self.logger.debug("APPENDED: CHILD [%s] to PARENT [%s]" % (AXML_Item['name'], last_parent_element['name']))
                         # Change focus of last_parent to the current element in case it has children following
                         last_parent_element = AXML_Item
-                    elif AXML_Item['type'] == 'A:':
+                        AXML_elements.append(last_parent_element)
+                    #elif AXML_Item['type'] == 'A:':
+                    #    last_parent_element['child_items'].append(AXML_Item)
                 elif AXML_Item['leadspace'] == last_parent_element['leadspace']:
                     AXML_elements.append(AXML_Item)
+                    #last_parent_element['child_items'].append(AXML_Item)
 
                 # if AXML_Item['leadspace'] > prev_lead_space:
                 #     # Child "element" or "attribute"
@@ -292,12 +336,16 @@ class PyAdb(object):
         return
 
 adb_proc = PyAdb()
-adb_proc.adb_start()
-adb_proc.adb_list_devices()
-adb_proc.adb_get_packages_installed()
+#adb_proc.adb_start()
+#adb_proc.adb_list_devices()
+#adb_proc.adb_get_packages_installed()
 
-#adb_proc.aapt_get_activity_list('app-debug.apk')
-adb_proc.aapt_get_activity_list('eu.chainfire.supersu_2.79-279_minAPI7(nodpi)_apkmirror.com.apk')
+adb_proc.aapt_get_activity_list('app-debug.apk')
+#adb_proc.aapt_get_activity_list('eu.chainfire.supersu_2.79-279_minAPI7(nodpi)_apkmirror.com.apk')
+
+#adb_proc.use_AXML_Printer('app-debug')
+adb_proc.use_AXML_Printer('eu.chainfire.supersu_2.79-279_minAPI7(nodpi)_apkmirror.com')
+
 
 
 
